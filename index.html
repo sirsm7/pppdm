@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analisa Pendidikan Digital 2024-2025</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .card { background: white; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .badge-ada { background-color: #d1fae5; color: #065f46; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; }
+        .badge-tiada { background-color: #fee2e2; color: #991b1b; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; }
+    </style>
+</head>
+<body class="pb-10">
+
+    <header class="bg-blue-900 text-white p-6 shadow-lg">
+        <div class="container mx-auto">
+            <h1 class="text-3xl font-bold mb-2">Laporan Eksekutif Pendidikan Digital</h1>
+            <p class="text-blue-200">Analisa Trend Penyertaan & Prestasi Sekolah 2024-2025</p>
+        </div>
+    </header>
+
+    <div class="container mx-auto mt-8 px-4">
+        
+        <div class="card mb-8 border-l-4 border-blue-500">
+            <h2 class="text-xl font-bold mb-4 text-gray-800">🔍 Semakan Sekolah</h2>
+            <div class="relative">
+                <input type="text" id="searchInput" placeholder="Cari Nama Sekolah atau Kod Sekolah (Cth: MBA0001)..." 
+                    class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition shadow-sm">
+                <div id="searchSuggestions" class="absolute z-10 w-full bg-white shadow-xl rounded-b-lg mt-1 hidden max-h-60 overflow-y-auto border border-gray-100"></div>
+            </div>
+            
+            <div id="schoolProfile" class="hidden mt-6 bg-blue-50 p-6 rounded-lg border border-blue-100">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                    <div>
+                        <h3 id="profileName" class="text-2xl font-bold text-blue-900">Nama Sekolah</h3>
+                        <div class="flex gap-3 mt-2 text-sm text-gray-600">
+                            <span id="profileCode" class="bg-white px-3 py-1 rounded shadow-sm">Kod</span>
+                            <span id="profileCategory" class="bg-white px-3 py-1 rounded shadow-sm">Kategori</span>
+                            <span id="profileParlimen" class="bg-white px-3 py-1 rounded shadow-sm">Parlimen</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto bg-white rounded-lg shadow-sm">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-100 text-gray-600 text-sm uppercase tracking-wider">
+                                <th class="p-4">Nama Pertandingan</th>
+                                <th class="p-4 text-center">2024</th>
+                                <th class="p-4 text-center">2025</th>
+                                <th class="p-4 text-center">Trend</th>
+                            </tr>
+                        </thead>
+                        <tbody id="schoolHistoryBody" class="text-gray-700">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">📊 Papan Pemuka Analisa</h2>
+            <select id="compSelect" class="mt-4 md:mt-0 p-3 border border-gray-300 rounded-lg shadow-sm bg-white min-w-[300px]">
+                </select>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="card bg-white border-l-4 border-indigo-500">
+                <p class="text-gray-500 text-sm font-semibold">JUMLAH PENYERTAAN 2025</p>
+                <p id="kpi-total" class="text-3xl font-bold text-gray-800 mt-2">0</p>
+                <p id="kpi-growth" class="text-sm mt-2 font-medium">--</p>
+            </div>
+            <div class="card bg-white border-l-4 border-green-500">
+                <p class="text-gray-500 text-sm font-semibold">KEKAL (CONSISTENT)</p>
+                <p id="kpi-kekal" class="text-3xl font-bold text-green-600 mt-2">0</p>
+                <p class="text-xs text-gray-400 mt-1">Sertai 2024 & 2025</p>
+            </div>
+            <div class="card bg-white border-l-4 border-red-500">
+                <p class="text-gray-500 text-sm font-semibold">CICIR (ATTRITION)</p>
+                <p id="kpi-cicir" class="text-3xl font-bold text-red-600 mt-2">0</p>
+                <p class="text-xs text-gray-400 mt-1">Sertai 2024, Tiada 2025</p>
+            </div>
+            <div class="card bg-white border-l-4 border-blue-400">
+                <p class="text-gray-500 text-sm font-semibold">PENYERTAAN BARU</p>
+                <p id="kpi-baru" class="text-3xl font-bold text-blue-600 mt-2">0</p>
+                <p class="text-xs text-gray-400 mt-1">Tiada 2024, Sertai 2025</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div class="card">
+                <h3 class="text-lg font-bold mb-4 text-gray-700">Trend Penyertaan (2024 vs 2025)</h3>
+                <canvas id="trendChart"></canvas>
+            </div>
+            <div class="card">
+                <h3 class="text-lg font-bold mb-4 text-gray-700">Pecahan Mengikut Parlimen (2025)</h3>
+                <canvas id="parlimenChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-gray-800">🏆 Senarai Sekolah Konsisten</h3>
+                <button onclick="toggleConsistentList()" class="text-blue-600 text-sm font-semibold hover:underline">Lihat / Sembunyi</button>
+            </div>
+            <div id="consistentListContainer" class="hidden overflow-y-auto max-h-96">
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-gray-50 text-gray-500 sticky top-0">
+                        <tr>
+                            <th class="p-3">Nama Sekolah</th>
+                            <th class="p-3">Parlimen</th>
+                            <th class="p-3 text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="consistentListBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -3,126 +3,206 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analisa Pendidikan Digital 2024-2025</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>Analisa PPD Alor Gajah: Pemerkasaan Digital</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .card { background: white; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        .badge-ada { background-color: #d1fae5; color: #065f46; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; }
-        .badge-tiada { background-color: #fee2e2; color: #991b1b; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 600; }
+        body { background-color: #f4f6f9; }
+        .card-box { border-radius: 10px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.3s; }
+        .card-box:hover { transform: translateY(-5px); }
+        .bg-gradient-primary { background: linear-gradient(45deg, #4e73df, #224abe); color: white; }
+        .bg-gradient-success { background: linear-gradient(45deg, #1cc88a, #13855c); color: white; }
+        .bg-gradient-danger { background: linear-gradient(45deg, #e74a3b, #be2617); color: white; }
+        .nav-tabs .nav-link.active { font-weight: bold; border-top: 3px solid #4e73df; }
+        .status-badge { font-size: 0.85rem; }
     </style>
 </head>
-<body class="pb-10">
+<body>
 
-    <header class="bg-blue-900 text-white p-6 shadow-lg">
-        <div class="container mx-auto">
-            <h1 class="text-3xl font-bold mb-2">Laporan Eksekutif Pendidikan Digital</h1>
-            <p class="text-blue-200">Analisa Trend Penyertaan & Prestasi Sekolah 2024-2025</p>
+    <nav class="navbar navbar-dark bg-dark mb-4">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <i class="fas fa-chart-line me-2"></i>Analisa Pendidikan Digital PPD Alor Gajah
+            </span>
+            <span class="text-white small">Tahun 2024 / 2025</span>
         </div>
-    </header>
+    </nav>
 
-    <div class="container mx-auto mt-8 px-4">
+    <div class="container mb-5">
         
-        <div class="card mb-8 border-l-4 border-blue-500">
-            <h2 class="text-xl font-bold mb-4 text-gray-800">🔍 Semakan Sekolah</h2>
-            <div class="relative">
-                <input type="text" id="searchInput" placeholder="Cari Nama Sekolah atau Kod Sekolah (Cth: MBA0001)..." 
-                    class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition shadow-sm">
-                <div id="searchSuggestions" class="absolute z-10 w-full bg-white shadow-xl rounded-b-lg mt-1 hidden max-h-60 overflow-y-auto border border-gray-100"></div>
-            </div>
+        <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button">
+                    <i class="fas fa-home me-1"></i> Laporan Eksekutif
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="analysis-tab" data-bs-toggle="tab" data-bs-target="#analysis" type="button">
+                    <i class="fas fa-table me-1"></i> Analisa Sekolah
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="search-tab" data-bs-toggle="tab" data-bs-target="#search" type="button">
+                    <i class="fas fa-search me-1"></i> Semakan Sekolah
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="myTabContent">
             
-            <div id="schoolProfile" class="hidden mt-6 bg-blue-50 p-6 rounded-lg border border-blue-100">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-                    <div>
-                        <h3 id="profileName" class="text-2xl font-bold text-blue-900">Nama Sekolah</h3>
-                        <div class="flex gap-3 mt-2 text-sm text-gray-600">
-                            <span id="profileCode" class="bg-white px-3 py-1 rounded shadow-sm">Kod</span>
-                            <span id="profileCategory" class="bg-white px-3 py-1 rounded shadow-sm">Kategori</span>
-                            <span id="profileParlimen" class="bg-white px-3 py-1 rounded shadow-sm">Parlimen</span>
+            <div class="tab-pane fade show active" id="dashboard">
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card card-box bg-gradient-primary p-3 mb-3">
+                            <h3><i class="fas fa-school"></i> <span id="totalSchools">0</span></h3>
+                            <p class="mb-0">Jumlah Sekolah</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card card-box bg-gradient-success p-3 mb-3">
+                            <h3><i class="fas fa-check-circle"></i> <span id="activeSchools">0</span></h3>
+                            <p class="mb-0">Sekolah Aktif (Sekurang-kurangnya 1)</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card card-box bg-gradient-danger p-3 mb-3">
+                            <h3><i class="fas fa-times-circle"></i> <span id="zeroSchools">0</span></h3>
+                            <p class="mb-0">Tiada Penglibatan (Zon Merah)</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card card-box bg-secondary text-white p-3 mb-3">
+                            <h3><i class="fas fa-calendar-alt"></i> 2024/25</h3>
+                            <p class="mb-0">Tempoh Analisa</p>
                         </div>
                     </div>
                 </div>
-                
-                <div class="overflow-x-auto bg-white rounded-lg shadow-sm">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-gray-100 text-gray-600 text-sm uppercase tracking-wider">
-                                <th class="p-4">Nama Pertandingan</th>
-                                <th class="p-4 text-center">2024</th>
-                                <th class="p-4 text-center">2025</th>
-                                <th class="p-4 text-center">Trend</th>
-                            </tr>
-                        </thead>
-                        <tbody id="schoolHistoryBody" class="text-gray-700">
-                            </tbody>
-                    </table>
+
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="card card-box h-100">
+                            <div class="card-header bg-white font-weight-bold">Trend Penyertaan Mengikut Parlimen</div>
+                            <div class="card-body">
+                                <canvas id="parlimenChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card card-box h-100">
+                            <div class="card-header bg-white font-weight-bold">Pecahan Mengikut Kategori Sekolah</div>
+                            <div class="card-body">
+                                <canvas id="categoryChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="flex flex-col md:flex-row justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold text-gray-800">📊 Papan Pemuka Analisa</h2>
-            <select id="compSelect" class="mt-4 md:mt-0 p-3 border border-gray-300 rounded-lg shadow-sm bg-white min-w-[300px]">
-                </select>
-        </div>
+            <div class="tab-pane fade" id="analysis">
+                <div class="row">
+                    <div class="col-md-12 mb-4">
+                        <div class="card card-box">
+                            <div class="card-header bg-success text-white">
+                                <i class="fas fa-star me-2"></i>Sekolah Cemerlang & Konsisten (Top 10)
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-bordered" id="topSchoolsTable">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Kod</th>
+                                                <th>Nama Sekolah</th>
+                                                <th>Kategori</th>
+                                                <th>Skor 2024</th>
+                                                <th>Skor 2025</th>
+                                                <th>Trend</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="card bg-white border-l-4 border-indigo-500">
-                <p class="text-gray-500 text-sm font-semibold">JUMLAH PENYERTAAN 2025</p>
-                <p id="kpi-total" class="text-3xl font-bold text-gray-800 mt-2">0</p>
-                <p id="kpi-growth" class="text-sm mt-2 font-medium">--</p>
+                    <div class="col-md-12 mb-4">
+                        <div class="card card-box border-danger">
+                            <div class="card-header bg-danger text-white">
+                                <i class="fas fa-exclamation-triangle me-2"></i>Senarai Sekolah Tiada Penyertaan Langsung (Zon Merah)
+                            </div>
+                            <div class="card-body">
+                                <p class="text-danger small">* Sekolah berikut merekodkan 'false' untuk semua pertandingan pada 2024 dan 2025.</p>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped" id="zeroSchoolsTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Kod</th>
+                                                <th>Nama Sekolah</th>
+                                                <th>Parlimen</th>
+                                                <th>Kategori</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="card bg-white border-l-4 border-green-500">
-                <p class="text-gray-500 text-sm font-semibold">KEKAL (CONSISTENT)</p>
-                <p id="kpi-kekal" class="text-3xl font-bold text-green-600 mt-2">0</p>
-                <p class="text-xs text-gray-400 mt-1">Sertai 2024 & 2025</p>
-            </div>
-            <div class="card bg-white border-l-4 border-red-500">
-                <p class="text-gray-500 text-sm font-semibold">CICIR (ATTRITION)</p>
-                <p id="kpi-cicir" class="text-3xl font-bold text-red-600 mt-2">0</p>
-                <p class="text-xs text-gray-400 mt-1">Sertai 2024, Tiada 2025</p>
-            </div>
-            <div class="card bg-white border-l-4 border-blue-400">
-                <p class="text-gray-500 text-sm font-semibold">PENYERTAAN BARU</p>
-                <p id="kpi-baru" class="text-3xl font-bold text-blue-600 mt-2">0</p>
-                <p class="text-xs text-gray-400 mt-1">Tiada 2024, Sertai 2025</p>
-            </div>
-        </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-            <div class="card">
-                <h3 class="text-lg font-bold mb-4 text-gray-700">Trend Penyertaan (2024 vs 2025)</h3>
-                <canvas id="trendChart"></canvas>
-            </div>
-            <div class="card">
-                <h3 class="text-lg font-bold mb-4 text-gray-700">Pecahan Mengikut Parlimen (2025)</h3>
-                <canvas id="parlimenChart"></canvas>
-            </div>
-        </div>
+            <div class="tab-pane fade" id="search">
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="card card-box p-4">
+                            <h4 class="text-center mb-4">Semakan Status Sekolah</h4>
+                            <div class="input-group mb-3">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" id="searchInput" class="form-control" placeholder="Cari Nama Sekolah atau Kod...">
+                                <select class="form-select" id="schoolDropdown" style="max-width: 200px;">
+                                    <option value="">Pilih Sekolah...</option>
+                                    </select>
+                            </div>
+                            
+                            <div id="schoolResultCard" class="card mt-3 d-none border-primary">
+                                <div class="card-header bg-primary text-white" id="resultTitle">
+                                    Nama Sekolah
+                                </div>
+                                <div class="card-body">
+                                    <div class="row text-center mb-3">
+                                        <div class="col-6">
+                                            <h5>2024</h5>
+                                            <h2 id="score2024" class="text-primary fw-bold">0</h2>
+                                            <span class="text-muted">Aktiviti</span>
+                                        </div>
+                                        <div class="col-6">
+                                            <h5>2025</h5>
+                                            <h2 id="score2025" class="text-primary fw-bold">0</h2>
+                                            <span class="text-muted">Aktiviti</span>
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <h6 class="fw-bold">Butiran Penyertaan:</h6>
+                                    <ul id="activityList" class="list-group list-group-flush small text-start">
+                                        </ul>
+                                </div>
+                            </div>
 
-        <div class="card">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold text-gray-800">🏆 Senarai Sekolah Konsisten</h3>
-                <button onclick="toggleConsistentList()" class="text-blue-600 text-sm font-semibold hover:underline">Lihat / Sembunyi</button>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div id="consistentListContainer" class="hidden overflow-y-auto max-h-96">
-                <table class="w-full text-sm text-left">
-                    <thead class="bg-gray-50 text-gray-500 sticky top-0">
-                        <tr>
-                            <th class="p-3">Nama Sekolah</th>
-                            <th class="p-3">Parlimen</th>
-                            <th class="p-3 text-center">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="consistentListBody"></tbody>
-                </table>
-            </div>
-        </div>
 
+        </div>
     </div>
 
+    <footer class="text-center py-4 text-muted small">
+        &copy; 2025 Unit Sumber & Teknologi Pendidikan, PPD Alor Gajah.
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

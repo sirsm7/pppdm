@@ -2,20 +2,29 @@ document.addEventListener("DOMContentLoaded", function () {
     // URL ke fail JSON tempatan
     const DATA_URL = "data.json";
 
-    // Kunci Data untuk 2024 dan 2025
+    // Senarai penuh kunci (Keys) untuk tahun 2024
     const keys2024 = [
-        "digitalStoryTellingAnimation2024", "myRoboticChallengeRekaedukit2024",
-        "myRoboticChallengeMikrobotik2024", "myRoboticChallengeAiRobotik2024",
-        "myCyberHero2024", "minecraftEducationChallenge2024",
-        "droneEduchallengeIR402024", "cabaranKeselamatanSiberNasional2024",
+        "digitalStoryTellingAnimation2024",
+        "myRoboticChallengeRekaedukit2024",
+        "myRoboticChallengeMikrobotik2024",
+        "myRoboticChallengeAiRobotik2024",
+        "myCyberHero2024",
+        "minecraftEducationChallenge2024",
+        "droneEduchallengeIR402024",
+        "cabaranKeselamatanSiberNasional2024",
         "pertandinganPembangunanAplikasiAndroid2024"
     ];
 
+    // Senarai penuh kunci (Keys) untuk tahun 2025
     const keys2025 = [
-        "digitalStoryTellingAnimation2025", "myRoboticChallengeRekaedukit2025",
-        "myRoboticChallengeMikrobotik2025", "myRoboticChallengeAiRobotik2025",
-        "myCyberHero2025", "minecraftEducationChallenge2025",
-        "droneEduchallengeIR402025", "cabaranKeselamatanSiberNasional2025",
+        "digitalStoryTellingAnimation2025",
+        "myRoboticChallengeRekaedukit2025",
+        "myRoboticChallengeMikrobotik2025",
+        "myRoboticChallengeAiRobotik2025",
+        "myCyberHero2025",
+        "minecraftEducationChallenge2025",
+        "droneEduchallengeIR402025",
+        "cabaranKeselamatanSiberNasional2025",
         "pertandinganPembangunanAplikasiAndroid2025"
     ];
 
@@ -100,34 +109,42 @@ document.addEventListener("DOMContentLoaded", function () {
     // --- FUNGSI RENDER CARTA ---
     function renderCharts(stats) {
         // Carta Parlimen (Bar)
-        new Chart(document.getElementById("parlimenChart"), {
-            type: 'bar',
-            data: {
-                labels: Object.keys(stats.parlimen),
-                datasets: [{
-                    label: 'Jumlah Penyertaan Aktiviti',
-                    data: Object.values(stats.parlimen),
-                    backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc'],
-                }]
-            }
-        });
+        const ctxParlimen = document.getElementById("parlimenChart");
+        if (ctxParlimen) {
+            new Chart(ctxParlimen, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(stats.parlimen),
+                    datasets: [{
+                        label: 'Jumlah Penyertaan Aktiviti',
+                        data: Object.values(stats.parlimen),
+                        backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e'],
+                    }]
+                }
+            });
+        }
 
         // Carta Kategori (Doughnut)
-        new Chart(document.getElementById("categoryChart"), {
-            type: 'doughnut',
-            data: {
-                labels: Object.keys(stats.kategori),
-                datasets: [{
-                    data: Object.values(stats.kategori),
-                    backgroundColor: ['#e74a3b', '#f6c23e', '#1cc88a', '#4e73df', '#858796'],
-                }]
-            }
-        });
+        const ctxCategory = document.getElementById("categoryChart");
+        if (ctxCategory) {
+            new Chart(ctxCategory, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(stats.kategori),
+                    datasets: [{
+                        data: Object.values(stats.kategori),
+                        backgroundColor: ['#e74a3b', '#f6c23e', '#1cc88a', '#4e73df', '#858796', '#6f42c1', '#20c9a6'],
+                    }]
+                }
+            });
+        }
     }
 
     // --- FUNGSI RENDER JADUAL ---
     function renderTopSchoolsTable(schools) {
         const tbody = document.querySelector("#topSchoolsTable tbody");
+        if (!tbody) return;
+        
         tbody.innerHTML = "";
         schools.forEach(s => {
             let trendIcon = s.score25 >= s.score24 
@@ -148,6 +165,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function renderZeroSchoolsTable(schools) {
         const tbody = document.querySelector("#zeroSchoolsTable tbody");
+        if (!tbody) return;
+
         tbody.innerHTML = "";
         schools.forEach(s => {
             let row = `<tr>
@@ -212,23 +231,67 @@ document.addEventListener("DOMContentLoaded", function () {
             const listContainer = document.getElementById("activityList");
             listContainer.innerHTML = "";
 
-            // Gabung key untuk paparan
-            const allKeys = [...keys2024, ...keys2025];
-            // Filter unique names base (buang '2024'/'2025' suffix untuk label cantik)
+            // Mapping LENGKAP untuk semua 9 jenis pertandingan
             let activities = [
-                { key24: "digitalStoryTellingAnimation2024", key25: "digitalStoryTellingAnimation2025", label: "Digital Storytelling" },
-                { key24: "myRoboticChallengeRekaedukit2024", key25: "myRoboticChallengeRekaedukit2025", label: "Robotik: Reka Edukit" },
-                { key24: "myRoboticChallengeMikrobotik2024", key25: "myRoboticChallengeMikrobotik2025", label: "Robotik: Mikrobotik" },
-                { key24: "minecraftEducationChallenge2024", key25: "minecraftEducationChallenge2025", label: "Minecraft Education" },
-                { key24: "droneEduchallengeIR402024", key25: "droneEduchallengeIR402025", label: "Drone Edu Challenge" }
-                // Tambah lagi jika perlu...
+                { 
+                    key24: "digitalStoryTellingAnimation2024", 
+                    key25: "digitalStoryTellingAnimation2025", 
+                    label: "Digital Storytelling Animation" 
+                },
+                { 
+                    key24: "myRoboticChallengeRekaedukit2024", 
+                    key25: "myRoboticChallengeRekaedukit2025", 
+                    label: "Robotik: Reka Edukit" 
+                },
+                { 
+                    key24: "myRoboticChallengeMikrobotik2024", 
+                    key25: "myRoboticChallengeMikrobotik2025", 
+                    label: "Robotik: Mikrobotik" 
+                },
+                { 
+                    key24: "myRoboticChallengeAiRobotik2024", 
+                    key25: "myRoboticChallengeAiRobotik2025", 
+                    label: "Robotik: AI Robotik" 
+                },
+                { 
+                    key24: "myCyberHero2024", 
+                    key25: "myCyberHero2025", 
+                    label: "My Cyber Hero" 
+                },
+                { 
+                    key24: "minecraftEducationChallenge2024", 
+                    key25: "minecraftEducationChallenge2025", 
+                    label: "Minecraft Education Challenge" 
+                },
+                { 
+                    key24: "droneEduchallengeIR402024", 
+                    key25: "droneEduchallengeIR402025", 
+                    label: "Drone Edu Challenge IR4.0" 
+                },
+                { 
+                    key24: "cabaranKeselamatanSiberNasional2024", 
+                    key25: "cabaranKeselamatanSiberNasional2025", 
+                    label: "Cabaran Keselamatan Siber Nasional" 
+                },
+                { 
+                    key24: "pertandinganPembangunanAplikasiAndroid2024", 
+                    key25: "pertandinganPembangunanAplikasiAndroid2025", 
+                    label: "Pembangunan Aplikasi Android" 
+                }
             ];
 
+            // Render Senarai
             activities.forEach(act => {
-                let status24 = school[act.key24] ? '<span class="text-success"><i class="fas fa-check"></i> 2024</span>' : '<span class="text-muted"><i class="fas fa-times"></i> 2024</span>';
-                let status25 = school[act.key25] ? '<span class="text-success fw-bold"><i class="fas fa-check"></i> 2025</span>' : '<span class="text-muted"><i class="fas fa-times"></i> 2025</span>';
+                let status24 = school[act.key24] 
+                    ? '<span class="text-success"><i class="fas fa-check"></i> 2024</span>' 
+                    : '<span class="text-muted" style="opacity:0.5"><i class="fas fa-times"></i> 2024</span>';
                 
-                if(school[act.key24] || school[act.key25]) { // Papar jika pernah masuk salah satu tahun
+                let status25 = school[act.key25] 
+                    ? '<span class="text-success fw-bold"><i class="fas fa-check"></i> 2025</span>' 
+                    : '<span class="text-muted" style="opacity:0.5"><i class="fas fa-times"></i> 2025</span>';
+                
+                // Papar baris jika sekolah pernah sertai (salah satu tahun)
+                if(school[act.key24] || school[act.key25]) { 
                     let li = document.createElement("li");
                     li.className = "list-group-item d-flex justify-content-between align-items-center";
                     li.innerHTML = `<span>${act.label}</span> <div>${status24} | ${status25}</div>`;
@@ -236,8 +299,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             });
 
+            // Jika tiada penyertaan langsung
             if (score24 === 0 && score25 === 0) {
-                listContainer.innerHTML = '<li class="list-group-item text-danger text-center">Tiada rekod penyertaan dalam data ini.</li>';
+                listContainer.innerHTML = '<li class="list-group-item text-danger text-center"><i class="fas fa-exclamation-circle"></i> Tiada sebarang rekod penyertaan dalam data ini.</li>';
             }
         }
     }

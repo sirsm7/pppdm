@@ -2,7 +2,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const DATA_URL = "data.json";
 
     // --- CONFIGURATION ZONE ---
-    // Mudah untuk diselenggara jika tahun bertambah
     const CONFIG = {
         years: [2024, 2025], 
         activities: [
@@ -17,6 +16,9 @@ document.addEventListener("DOMContentLoaded", function () {
             { id: "pertandinganPembangunanAplikasiAndroid", label: "Pembangunan Aplikasi Android" }
         ]
     };
+
+    // Susunan Kategori Standard (Dikongsi antara filter dan carian)
+    const categoryOrder = ["SK", "SJKC", "SJKT", "SR SABK", "SMK", "SBP", "KV", "SM SABK"];
 
     const getKey = (baseId, year) => `${baseId}${year}`;
 
@@ -67,7 +69,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 topSchools.push({ ...school, scores, totalScore });
             } else {
                 stats.zero++;
-                zeroSchools.push(school); // Simpan untuk eksport CSV
+                zeroSchools.push(school); 
             }
 
             // Agregat Carta
@@ -86,16 +88,49 @@ document.addEventListener("DOMContentLoaded", function () {
         // 2. Render Carta
         renderCharts(stats);
 
-        // 3. Render Jadual
-        // MODIFIED: Susun ikut markah 2025 tertinggi
+        // 3. Render Jadual (Sort by 2025 High to Low)
         topSchools.sort((a, b) => b.scores[2025] - a.scores[2025]);
         
-        // MODIFIED: Papar semua sekolah aktif (tiada .slice)
+        // Initial Render (Semua Kategori)
         renderTopSchoolsTable(topSchools);
         renderZeroSchoolsTable(zeroSchools);
 
-        // 4. Setup Fungsi Eksport CSV (Baharu!)
+        // 4. Setup Filter Kategori
+        setupCategoryFilter(topSchools);
+
+        // 5. Setup Fungsi Eksport CSV
         setupCsvExport(zeroSchools);
+    }
+
+    // --- FUNGSI FILTER KATEGORI (NEW) ---
+    function setupCategoryFilter(allSchools) {
+        const filterDropdown = document.getElementById("categoryFilter");
+        if(!filterDropdown) return;
+
+        // Populate options based on categoryOrder
+        categoryOrder.forEach(cat => {
+            let label = cat === "SJKC" ? "SJK (Cina)" : cat;
+            let option = document.createElement("option");
+            option.value = cat;
+            option.text = label;
+            filterDropdown.appendChild(option);
+        });
+
+        // Add 'Lain-lain' if exists in data but not in standard list
+        // (Optional, for robustness)
+
+        filterDropdown.addEventListener("change", (e) => {
+            const selectedCat = e.target.value;
+            let filteredList;
+
+            if (selectedCat === "all") {
+                filteredList = allSchools;
+            } else {
+                filteredList = allSchools.filter(s => s.kategoriSekolah === selectedCat);
+            }
+
+            renderTopSchoolsTable(filteredList);
+        });
     }
 
     // --- FUNGSI EKSPORT CSV ---
@@ -107,18 +142,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 alert("Tiada data untuk dieksport.");
                 return;
             }
-
-            // Header CSV
             let csvContent = "Kod Sekolah,Nama Sekolah,Parlimen,Kategori\n";
-
-            // Loop Data
             data.forEach(s => {
-                // Pastikan tiada koma dalam nama sekolah mengganggu format CSV
                 let safeName = `"${s.namaSekolah}"`; 
                 csvContent += `${s.kodSekolah},${safeName},${s.parlimen},${s.kategoriSekolah}\n`;
             });
-
-            // Proses Download
             const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
@@ -169,16 +197,20 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!tbody) return;
         
         tbody.innerHTML = "";
+        
+        if (schools.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Tiada sekolah dalam kategori ini yang aktif.</td></tr>`;
+            return;
+        }
+
         schools.forEach(s => {
             let scoreY1 = s.scores[CONFIG.years[0]]; // 2024
             let scoreY2 = s.scores[CONFIG.years[1]]; // 2025
             
-            // Logic Trend: Bandingkan 2025 dengan 2024
             let trendIcon = scoreY2 >= scoreY1 
                 ? '<span class="badge bg-success"><i class="fas fa-arrow-up"></i> Kekal/Naik</span>' 
                 : '<span class="badge bg-warning text-dark"><i class="fas fa-arrow-down"></i> Menurun</span>';
             
-            // Highlight skor 2025 sebab itu kriteria sorting utama sekarang
             tbody.innerHTML += `<tr>
                 <td>${s.kodSekolah}</td>
                 <td>${s.namaSekolah}</td>
@@ -205,18 +237,11 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // --- SISTEM CARIAN & DROPDOWN (MODIFIED: GROUPING) ---
+    // --- SISTEM CARIAN & DROPDOWN ---
     function setupSearchSystem(data) {
         const dropdown = document.getElementById("schoolDropdown");
         const searchInput = document.getElementById("searchInput");
         const resultCard = document.getElementById("schoolResultCard");
-
-        // Kosongkan dropdown asal (kekalkan placeholder pertama)
-        // dropdown.innerHTML = '<option value="">Pilih Sekolah...</option>'; // Opsyenal, tapi HTML dah ada
-
-        // Susunan Kategori yang diminta
-        // Nota: "SJK" dalam permintaan dipetakan kepada "SJKC" dalam data JSON
-        const categoryOrder = ["SK", "SJKC", "SJKT", "SR SABK", "SMK", "SBP", "KV", "SM SABK"];
 
         // 1. Group data mengikut kategori
         const groupedData = data.reduce((acc, school) => {
@@ -226,17 +251,14 @@ document.addEventListener("DOMContentLoaded", function () {
             return acc;
         }, {});
 
-        // 2. Loop ikut susunan kategori yang ditetapkan
+        // 2. Loop ikut susunan kategori yang ditetapkan (Guna global var categoryOrder)
         categoryOrder.forEach(category => {
             if (groupedData[category] && groupedData[category].length > 0) {
-                // Buat Optgroup
                 const group = document.createElement("optgroup");
-                group.label = category === "SJKC" ? "SJK (Cina)" : category; // Label cantik sikit untuk SJKC
+                group.label = category === "SJKC" ? "SJK (Cina)" : category; 
 
-                // Sort sekolah dalam kategori mengikut abjad (A-Z)
                 groupedData[category].sort((a, b) => a.namaSekolah.localeCompare(b.namaSekolah));
 
-                // Masukkan option dalam group
                 groupedData[category].forEach(s => {
                     let option = document.createElement("option");
                     option.value = s.kodSekolah;
@@ -248,29 +270,12 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
 
-        // Handle kategori lain yang mungkin wujud tapi tiada dalam list 'categoryOrder' (Safety measure)
-        Object.keys(groupedData).forEach(cat => {
-            if (!categoryOrder.includes(cat)) {
-                const group = document.createElement("optgroup");
-                group.label = cat;
-                groupedData[cat].sort((a, b) => a.namaSekolah.localeCompare(b.namaSekolah));
-                groupedData[cat].forEach(s => {
-                    let option = document.createElement("option");
-                    option.value = s.kodSekolah;
-                    option.text = s.namaSekolah;
-                    group.appendChild(option);
-                });
-                dropdown.appendChild(group);
-            }
-        });
-
-        // Event: Dropdown
+        // Event: Dropdown & Search (Sama macam sebelum ini)
         dropdown.addEventListener("change", (e) => {
             const school = data.find(s => s.kodSekolah === e.target.value);
             if (school) showSchoolDetails(school);
         });
 
-        // Event: Search Text
         searchInput.addEventListener("input", (e) => {
             const query = e.target.value.toLowerCase();
             if (query.length > 2) {
@@ -289,17 +294,14 @@ document.addEventListener("DOMContentLoaded", function () {
             resultCard.classList.remove("d-none");
             document.getElementById("resultTitle").innerText = `${school.namaSekolah} (${school.kodSekolah})`;
 
-            // Kira Skor
             let currentScores = {};
             CONFIG.years.forEach(year => {
                 currentScores[year] = CONFIG.activities.reduce((acc, act) => acc + (school[getKey(act.id, year)] ? 1 : 0), 0);
             });
 
-            // Update UI Skor
             if(document.getElementById("score2024")) document.getElementById("score2024").innerText = currentScores[2024];
             if(document.getElementById("score2025")) document.getElementById("score2025").innerText = currentScores[2025];
 
-            // Senarai Aktiviti
             const listContainer = document.getElementById("activityList");
             listContainer.innerHTML = "";
             let anyParticipation = false;
@@ -313,7 +315,6 @@ document.addEventListener("DOMContentLoaded", function () {
                         : `<span class="text-muted mx-1" style="opacity:0.5"><i class="fas fa-times"></i> ${year}</span>`;
                 }).join(" | ");
 
-                // Papar jika pernah sertai
                 if(CONFIG.years.some(year => school[getKey(act.id, year)])) {
                     let li = document.createElement("li");
                     li.className = "list-group-item d-flex justify-content-between align-items-center";

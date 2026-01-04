@@ -19,6 +19,9 @@
         .bg-gradient-danger { background: linear-gradient(45deg, #e74a3b, #be2617); color: white; }
         .nav-tabs .nav-link.active { font-weight: bold; border-top: 3px solid #4e73df; }
         .status-badge { font-size: 0.85rem; }
+        /* Tambahan untuk jadual panjang agar lebih kemas */
+        .table-responsive { max-height: 800px; overflow-y: auto; }
+        thead th { position: sticky; top: 0; z-index: 1; }
     </style>
 </head>
 <body>
@@ -107,19 +110,21 @@
                 <div class="row">
                     <div class="col-md-12 mb-4">
                         <div class="card card-box">
-                            <div class="card-header bg-success text-white">
-                                <i class="fas fa-star me-2"></i>Sekolah Cemerlang & Konsisten (Top 10)
+                            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-list-ol me-2"></i>Senarai Prestasi Sekolah Mengikut Kategori</span>
+                                <span class="badge bg-light text-success" id="activeCountBadge">0 Sekolah</span>
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
-                                    <table class="table table-hover table-bordered" id="topSchoolsTable">
+                                    <table class="table table-hover table-bordered table-striped" id="topSchoolsTable">
                                         <thead class="table-light">
                                             <tr>
+                                                <th style="width: 5%">Bil</th>
                                                 <th>Kod</th>
                                                 <th>Nama Sekolah</th>
                                                 <th>Kategori</th>
-                                                <th>Skor 2024</th>
-                                                <th>Skor 2025</th>
+                                                <th class="text-center">Skor 2024</th>
+                                                <th class="text-center">Skor 2025</th>
                                                 <th>Trend</th>
                                             </tr>
                                         </thead>
@@ -144,6 +149,7 @@
                                     <table class="table table-sm table-striped" id="zeroSchoolsTable">
                                         <thead>
                                             <tr>
+                                                <th style="width: 5%">Bil</th>
                                                 <th>Kod</th>
                                                 <th>Nama Sekolah</th>
                                                 <th>Parlimen</th>
@@ -167,7 +173,7 @@
                             <div class="input-group mb-3">
                                 <span class="input-group-text"><i class="fas fa-search"></i></span>
                                 <input type="text" id="searchInput" class="form-control" placeholder="Cari Nama Sekolah atau Kod...">
-                                <select class="form-select" id="schoolDropdown" style="max-width: 200px;">
+                                <select class="form-select" id="schoolDropdown" style="max-width: 250px;">
                                     <option value="">Pilih Sekolah...</option>
                                     </select>
                             </div>

@@ -2,7 +2,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const DATA_URL = "data.json";
 
     // --- CONFIGURATION ZONE ---
-    // Mudah untuk diselenggara jika tahun bertambah
     const CONFIG = {
         years: [2024, 2025], 
         activities: [
@@ -17,6 +16,21 @@ document.addEventListener("DOMContentLoaded", function () {
             { id: "pertandinganPembangunanAplikasiAndroid", label: "Pembangunan Aplikasi Android" }
         ]
     };
+
+    // PEMBERAT KATEGORI UNTUK SUSUNAN
+    const categoryWeight = {
+        "SK": 1,
+        "SJKC": 2,
+        "SJKT": 3,
+        "SR SABK": 4,
+        "SMK": 5,
+        "SBP": 6,
+        "SM SABK": 7,
+        "KV": 8
+    };
+
+    // Fungsi bantuan untuk mendapatkan nilai pemberat (default 99 jika tiada dalam senarai)
+    const getCatWeight = (cat) => categoryWeight[cat] || 99;
 
     const getKey = (baseId, year) => `${baseId}${year}`;
 
@@ -46,7 +60,7 @@ document.addEventListener("DOMContentLoaded", function () {
             kategori: {}
         };
 
-        let topSchools = [];
+        let activeSchools = [];
         let zeroSchools = [];
 
         data.forEach(school => {
@@ -64,7 +78,7 @@ document.addEventListener("DOMContentLoaded", function () {
             // Pengasingan Data (Aktif vs Pasif)
             if (totalScore > 0) {
                 stats.active++;
-                topSchools.push({ ...school, scores, totalScore });
+                activeSchools.push({ ...school, scores, totalScore });
             } else {
                 stats.zero++;
                 zeroSchools.push(school); // Simpan untuk eksport CSV
@@ -82,16 +96,45 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("totalSchools").innerText = stats.total;
         document.getElementById("activeSchools").innerText = stats.active;
         document.getElementById("zeroSchools").innerText = stats.zero;
+        
+        // Update bilangan pada header jadual
+        const badge = document.getElementById("activeCountBadge");
+        if(badge) badge.innerText = `${stats.active} Sekolah`;
 
         // 2. Render Carta
         renderCharts(stats);
 
         // 3. Render Jadual
-        topSchools.sort((a, b) => b.totalScore - a.totalScore);
-        renderTopSchoolsTable(topSchools.slice(0, 10));
+        
+        // LOGIK SUSUNAN SEKOLAH AKTIF:
+        // Priority 1: Kategori (SK -> SJKC -> dll)
+        // Priority 2: Jumlah Skor (Tertinggi di atas)
+        // Priority 3: Nama Sekolah (A-Z)
+        activeSchools.sort((a, b) => {
+            const wA = getCatWeight(a.kategoriSekolah);
+            const wB = getCatWeight(b.kategoriSekolah);
+            
+            if (wA !== wB) return wA - wB; // Susun ikut kategori
+            if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore; // Susun ikut markah
+            return a.namaSekolah.localeCompare(b.namaSekolah); // Susun ikut nama
+        });
+
+        // LOGIK SUSUNAN SEKOLAH SIFAR (ZON MERAH):
+        // Priority 1: Kategori
+        // Priority 2: Nama Sekolah
+        zeroSchools.sort((a, b) => {
+            const wA = getCatWeight(a.kategoriSekolah);
+            const wB = getCatWeight(b.kategoriSekolah);
+
+            if (wA !== wB) return wA - wB;
+            return a.namaSekolah.localeCompare(b.namaSekolah);
+        });
+
+        // Render jadual (Tanpa slice/limit)
+        renderTopSchoolsTable(activeSchools);
         renderZeroSchoolsTable(zeroSchools);
 
-        // 4. Setup Fungsi Eksport CSV (Baharu!)
+        // 4. Setup Fungsi Eksport CSV
         setupCsvExport(zeroSchools);
     }
 
@@ -110,7 +153,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
             // Loop Data
             data.forEach(s => {
-                // Pastikan tiada koma dalam nama sekolah mengganggu format CSV
                 let safeName = `"${s.namaSekolah}"`; 
                 csvContent += `${s.kodSekolah},${safeName},${s.parlimen},${s.kategoriSekolah}\n`;
             });
@@ -166,7 +208,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!tbody) return;
         
         tbody.innerHTML = "";
-        schools.forEach(s => {
+        schools.forEach((s, index) => {
             let scoreY1 = s.scores[CONFIG.years[0]];
             let scoreY2 = s.scores[CONFIG.years[1]];
             let trendIcon = scoreY2 >= scoreY1 
@@ -174,9 +216,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 : '<span class="badge bg-warning text-dark"><i class="fas fa-arrow-down"></i> Menurun</span>';
             
             tbody.innerHTML += `<tr>
+                <td class="text-center fw-bold">${index + 1}</td>
                 <td>${s.kodSekolah}</td>
                 <td>${s.namaSekolah}</td>
-                <td>${s.kategoriSekolah}</td>
+                <td><span class="badge bg-primary status-badge">${s.kategoriSekolah}</span></td>
                 <td class="text-center">${scoreY1}</td>
                 <td class="text-center fw-bold text-primary">${scoreY2}</td>
                 <td>${trendIcon}</td>
@@ -189,8 +232,9 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!tbody) return;
 
         tbody.innerHTML = "";
-        schools.forEach(s => {
+        schools.forEach((s, index) => {
             tbody.innerHTML += `<tr>
+                <td class="text-center text-muted">${index + 1}</td>
                 <td>${s.kodSekolah}</td>
                 <td>${s.namaSekolah}</td>
                 <td>${s.parlimen}</td>
@@ -205,12 +249,20 @@ document.addEventListener("DOMContentLoaded", function () {
         const searchInput = document.getElementById("searchInput");
         const resultCard = document.getElementById("schoolResultCard");
 
+        // Sort data utama untuk dropdown (Kategori -> Nama)
+        data.sort((a, b) => {
+            const wA = getCatWeight(a.kategoriSekolah);
+            const wB = getCatWeight(b.kategoriSekolah);
+            
+            if (wA !== wB) return wA - wB; 
+            return a.namaSekolah.localeCompare(b.namaSekolah);
+        });
+
         // Isi Dropdown
-        data.sort((a, b) => a.namaSekolah.localeCompare(b.namaSekolah));
         data.forEach(s => {
             let option = document.createElement("option");
             option.value = s.kodSekolah;
-            option.text = s.namaSekolah;
+            option.text = `[${s.kategoriSekolah}] ${s.namaSekolah}`; // Tambah prefix kategori untuk mudah baca
             dropdown.appendChild(option);
         });
 

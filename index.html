@@ -1,363 +1,215 @@
-document.addEventListener("DOMContentLoaded", function () {
-    const DATA_URL = "data.json";
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analisa PPD Alor Gajah: Pemerkasaan Digital</title>
+    
+    <link rel="icon" type="image/png" href="logo-kpm.png">
 
-    // --- CONFIGURATION ZONE ---
-    const CONFIG = {
-        years: [2024, 2025], 
-        activities: [
-            { id: "digitalStoryTellingAnimation", label: "Digital Storytelling Animation" },
-            { id: "myRoboticChallengeRekaedukit", label: "Robotik: Reka Edukit" },
-            { id: "myRoboticChallengeMikrobotik", label: "Robotik: Mikrobotik" },
-            { id: "myRoboticChallengeAiRobotik", label: "Robotik: AI Robotik" },
-            { id: "myCyberHero", label: "My Cyber Hero" },
-            { id: "minecraftEducationChallenge", label: "Minecraft Education Challenge" },
-            { id: "droneEduchallengeIR40", label: "Drone Edu Challenge IR4.0" },
-            { id: "cabaranKeselamatanSiberNasional", label: "Cabaran Keselamatan Siber Nasional" },
-            { id: "pertandinganPembangunanAplikasiAndroid", label: "Pembangunan Aplikasi Android" }
-        ]
-    };
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { background-color: #f4f6f9; }
+        .card-box { border-radius: 10px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.3s; }
+        .card-box:hover { transform: translateY(-5px); }
+        .bg-gradient-primary { background: linear-gradient(45deg, #4e73df, #224abe); color: white; }
+        .bg-gradient-success { background: linear-gradient(45deg, #1cc88a, #13855c); color: white; }
+        .bg-gradient-danger { background: linear-gradient(45deg, #e74a3b, #be2617); color: white; }
+        .nav-tabs .nav-link.active { font-weight: bold; border-top: 3px solid #4e73df; }
+        .status-badge { font-size: 0.85rem; }
+    </style>
+</head>
+<body>
 
-    // --- LOGIK SUSUNAN KATEGORI ---
-    // Nombor lebih kecil akan berada di atas
-    const categoryWeight = {
-        "SK": 1,
-        "SJKC": 2,
-        "SJKT": 3,
-        "SR SABK": 4,
-        "SMK": 5,
-        "SBP": 6,
-        "SM SABK": 7,
-        "KV": 8
-    };
+    <nav class="navbar navbar-dark bg-dark mb-4">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <img src="logo-kpm.png" alt="Logo KPM" width="30" height="30" class="d-inline-block align-text-top me-2">
+                Analisa Pendidikan Digital PPD Alor Gajah
+            </span>
+            <span class="text-white small">Tahun 2024 / 2025</span>
+        </div>
+    </nav>
 
-    // Fungsi untuk mendapatkan berat kategori (fallback ke 99 jika tiada)
-    const getCatWeight = (cat) => {
-        // Buang whitespace extra jika ada & uppercase
-        let cleanCat = cat ? cat.trim().toUpperCase() : "";
-        return categoryWeight[cleanCat] || 99;
-    };
-
-    const getKey = (baseId, year) => `${baseId}${year}`;
-
-    // --- MAIN FETCH ---
-    fetch(DATA_URL)
-        .then(response => {
-            if (!response.ok) throw new Error("Gagal membaca fail JSON.");
-            return response.json();
-        })
-        .then(data => {
-            console.log("Data dimuatkan:", data.length);
-            processAnalytics(data);
-            setupSearchSystem(data);
-        })
-        .catch(error => {
-            alert("Ralat memuatkan data. Sila semak konsol.");
-            console.error(error);
-        });
-
-    // --- CORE LOGIC ---
-    function processAnalytics(data) {
-        let stats = {
-            total: data.length,
-            active: 0,
-            zero: 0,
-            parlimen: {},
-            kategori: {}
-        };
-
-        let activeSchools = [];
-        let zeroSchools = [];
-
-        data.forEach(school => {
-            let scores = {};
-            let totalScore = 0;
-
-            // Kira skor
-            CONFIG.years.forEach(year => {
-                scores[year] = CONFIG.activities.reduce((acc, act) => {
-                    return acc + (school[getKey(act.id, year)] ? 1 : 0);
-                }, 0);
-                totalScore += scores[year];
-            });
-
-            // Pengasingan Data
-            if (totalScore > 0) {
-                stats.active++;
-                activeSchools.push({ ...school, scores, totalScore });
-            } else {
-                stats.zero++;
-                zeroSchools.push(school); 
-            }
-
-            // Agregat Carta
-            let parlimen = school.parlimen || "Lain-lain";
-            stats.parlimen[parlimen] = (stats.parlimen[parlimen] || 0) + totalScore;
-
-            let cat = school.kategoriSekolah || "Lain-lain";
-            stats.kategori[cat] = (stats.kategori[cat] || 0) + totalScore;
-        });
-
-        // 1. Update UI Kad Dashboard
-        document.getElementById("totalSchools").innerText = stats.total;
-        document.getElementById("activeSchools").innerText = stats.active;
-        document.getElementById("zeroSchools").innerText = stats.zero;
+    <div class="container mb-5">
         
-        // Update Badge pada Jadual Analisa (Pastikan ID wujud)
-        const badgeElement = document.getElementById("activeCountBadge");
-        if(badgeElement) {
-            badgeElement.innerText = `${stats.active} Sekolah`;
-        }
+        <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button">
+                    <i class="fas fa-home me-1"></i> Laporan Eksekutif
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="analysis-tab" data-bs-toggle="tab" data-bs-target="#analysis" type="button">
+                    <i class="fas fa-table me-1"></i> Analisa Sekolah
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="search-tab" data-bs-toggle="tab" data-bs-target="#search" type="button">
+                    <i class="fas fa-search me-1"></i> Semakan Sekolah
+                </button>
+            </li>
+        </ul>
 
-        // 2. Render Carta
-        renderCharts(stats);
-
-        // 3. Susun Sekolah (SORTING LOGIC)
-        
-        // Fungsi sort universal
-        const sortFunction = (a, b) => {
-            const wA = getCatWeight(a.kategoriSekolah);
-            const wB = getCatWeight(b.kategoriSekolah);
+        <div class="tab-content" id="myTabContent">
             
-            // Priority 1: Ikut Kategori (SK dulu, baru SJKC...)
-            if (wA !== wB) return wA - wB; 
-            
-            // Priority 2: Jika kategori sama, ikut markah (jika ada property totalScore)
-            if (a.totalScore !== undefined && b.totalScore !== undefined) {
-                if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
-            }
+            <div class="tab-pane fade show active" id="dashboard">
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card card-box bg-gradient-primary p-3 mb-3">
+                            <h3><i class="fas fa-school"></i> <span id="totalSchools">0</span></h3>
+                            <p class="mb-0">Jumlah Sekolah</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card card-box bg-gradient-success p-3 mb-3">
+                            <h3><i class="fas fa-check-circle"></i> <span id="activeSchools">0</span></h3>
+                            <p class="mb-0">Sekolah Aktif (Sekurang-kurangnya 1)</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card card-box bg-gradient-danger p-3 mb-3">
+                            <h3><i class="fas fa-times-circle"></i> <span id="zeroSchools">0</span></h3>
+                            <p class="mb-0">Tiada Penglibatan (Zon Merah)</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card card-box bg-secondary text-white p-3 mb-3">
+                            <h3><i class="fas fa-calendar-alt"></i> 2024/25</h3>
+                            <p class="mb-0">Tempoh Analisa</p>
+                        </div>
+                    </div>
+                </div>
 
-            // Priority 3: Ikut Nama Sekolah (A-Z)
-            return a.namaSekolah.localeCompare(b.namaSekolah);
-        };
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="card card-box h-100">
+                            <div class="card-header bg-white font-weight-bold">Trend Penyertaan Mengikut Parlimen</div>
+                            <div class="card-body">
+                                <canvas id="parlimenChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card card-box h-100">
+                            <div class="card-header bg-white font-weight-bold">Pecahan Mengikut Kategori Sekolah</div>
+                            <div class="card-body">
+                                <canvas id="categoryChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-        activeSchools.sort(sortFunction);
-        zeroSchools.sort(sortFunction);
+            <div class="tab-pane fade" id="analysis">
+                <div class="row">
+                    <div class="col-md-12 mb-4">
+                        <div class="card card-box">
+                            <div class="card-header bg-success text-white">
+                                <i class="fas fa-star me-2"></i>Sekolah Cemerlang & Konsisten (Top 10)
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-bordered" id="topSchoolsTable">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Kod</th>
+                                                <th>Nama Sekolah</th>
+                                                <th>Kategori</th>
+                                                <th>Skor 2024</th>
+                                                <th>Skor 2025</th>
+                                                <th>Trend</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-        // 4. Render Jadual
-        renderTopSchoolsTable(activeSchools);
-        renderZeroSchoolsTable(zeroSchools);
+                    <div class="col-md-12 mb-4">
+                        <div class="card card-box border-danger">
+                            <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-exclamation-triangle me-2"></i>Senarai Sekolah Tiada Penyertaan Langsung (Zon Merah)</span>
+                                <button id="btnExportCsv" class="btn btn-sm btn-light text-danger fw-bold shadow-sm">
+                                    <i class="fas fa-download me-1"></i> Muat Turun Data Bimbingan (CSV)
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-danger small">* Data ini untuk tujuan bimbingan. Sekolah ini merekodkan 'false' untuk semua pertandingan 2024 & 2025.</p>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped" id="zeroSchoolsTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Kod</th>
+                                                <th>Nama Sekolah</th>
+                                                <th>Parlimen</th>
+                                                <th>Kategori</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-        // 5. Setup Eksport
-        setupCsvExport(zeroSchools);
-    }
+            <div class="tab-pane fade" id="search">
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="card card-box p-4">
+                            <h4 class="text-center mb-4">Semakan Status Sekolah</h4>
+                            <div class="input-group mb-3">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" id="searchInput" class="form-control" placeholder="Cari Nama Sekolah atau Kod...">
+                                <select class="form-select" id="schoolDropdown" style="max-width: 200px;">
+                                    <option value="">Pilih Sekolah...</option>
+                                    </select>
+                            </div>
+                            
+                            <div id="schoolResultCard" class="card mt-3 d-none border-primary">
+                                <div class="card-header bg-primary text-white" id="resultTitle">
+                                    Nama Sekolah
+                                </div>
+                                <div class="card-body">
+                                    <div class="row text-center mb-3">
+                                        <div class="col-6">
+                                            <h5>2024</h5>
+                                            <h2 id="score2024" class="text-primary fw-bold">0</h2>
+                                            <span class="text-muted">Aktiviti</span>
+                                        </div>
+                                        <div class="col-6">
+                                            <h5>2025</h5>
+                                            <h2 id="score2025" class="text-primary fw-bold">0</h2>
+                                            <span class="text-muted">Aktiviti</span>
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <h6 class="fw-bold">Butiran Penyertaan:</h6>
+                                    <ul id="activityList" class="list-group list-group-flush small text-start">
+                                        </ul>
+                                </div>
+                            </div>
 
-    // --- FUNGSI EKSPORT CSV ---
-    function setupCsvExport(data) {
-        const btn = document.getElementById("btnExportCsv");
-        if(!btn) return;
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-        btn.onclick = () => {
-            if (data.length === 0) {
-                alert("Tiada data untuk dieksport.");
-                return;
-            }
-            let csvContent = "Kod Sekolah,Nama Sekolah,Parlimen,Kategori\n";
-            data.forEach(s => {
-                let safeName = `"${s.namaSekolah}"`; 
-                csvContent += `${s.kodSekolah},${safeName},${s.parlimen},${s.kategoriSekolah}\n`;
-            });
-            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", "Senarai_Zon_Merah.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        };
-    }
+        </div>
+    </div>
 
-    // --- FUNGSI RENDER CARTA ---
-    function renderCharts(stats) {
-        const ctxParlimen = document.getElementById("parlimenChart");
-        if (ctxParlimen) {
-            // Hapus chart lama jika ada (untuk elak overlap jika re-render)
-            let chartStatus = Chart.getChart("parlimenChart"); 
-            if (chartStatus != undefined) chartStatus.destroy();
+    <footer class="text-center py-4 text-muted small">
+        &copy; 2025 Unit Sumber & Teknologi Pendidikan, PPD Alor Gajah.
+    </footer>
 
-            new Chart(ctxParlimen, {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(stats.parlimen),
-                    datasets: [{
-                        label: 'Jumlah Penyertaan',
-                        data: Object.values(stats.parlimen),
-                        backgroundColor: '#4e73df',
-                    }]
-                }
-            });
-        }
-
-        const ctxCategory = document.getElementById("categoryChart");
-        if (ctxCategory) {
-            let chartStatus = Chart.getChart("categoryChart"); 
-            if (chartStatus != undefined) chartStatus.destroy();
-
-            new Chart(ctxCategory, {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(stats.kategori),
-                    datasets: [{
-                        data: Object.values(stats.kategori),
-                        backgroundColor: ['#e74a3b', '#f6c23e', '#1cc88a', '#4e73df', '#858796', '#6f42c1', '#20c9a6', '#2c3e50'],
-                    }]
-                }
-            });
-        }
-    }
-
-    // --- FUNGSI RENDER JADUAL ---
-    function renderTopSchoolsTable(schools) {
-        const tbody = document.querySelector("#topSchoolsTable tbody");
-        if (!tbody) return;
-        
-        tbody.innerHTML = "";
-        
-        schools.forEach((s, index) => {
-            // Logik Trend
-            let scoreY1 = s.scores[CONFIG.years[0]];
-            let scoreY2 = s.scores[CONFIG.years[1]];
-            let trendIcon = scoreY2 >= scoreY1 
-                ? '<span class="badge bg-success"><i class="fas fa-arrow-up"></i> Kekal/Naik</span>' 
-                : '<span class="badge bg-warning text-dark"><i class="fas fa-arrow-down"></i> Menurun</span>';
-            
-            // Masukkan row
-            let row = `<tr>
-                <td class="text-center fw-bold">${index + 1}</td>
-                <td>${s.kodSekolah}</td>
-                <td>${s.namaSekolah}</td>
-                <td><span class="badge bg-primary status-badge">${s.kategoriSekolah}</span></td>
-                <td class="text-center">${scoreY1}</td>
-                <td class="text-center fw-bold text-primary">${scoreY2}</td>
-                <td>${trendIcon}</td>
-            </tr>`;
-            tbody.innerHTML += row;
-        });
-    }
-
-    function renderZeroSchoolsTable(schools) {
-        const tbody = document.querySelector("#zeroSchoolsTable tbody");
-        if (!tbody) return;
-
-        tbody.innerHTML = "";
-        schools.forEach((s, index) => {
-            let row = `<tr>
-                <td class="text-center text-muted">${index + 1}</td>
-                <td>${s.kodSekolah}</td>
-                <td>${s.namaSekolah}</td>
-                <td>${s.parlimen}</td>
-                <td><span class="badge bg-secondary">${s.kategoriSekolah}</span></td>
-            </tr>`;
-            tbody.innerHTML += row;
-        });
-    }
-
-    // --- SISTEM CARIAN & DROPDOWN ---
-    function setupSearchSystem(data) {
-        const dropdown = document.getElementById("schoolDropdown");
-        const searchInput = document.getElementById("searchInput");
-        const resultCard = document.getElementById("schoolResultCard");
-
-        // --- PEMBAIKAN PENTING: SORT DROPDOWN ---
-        // Kita copy array data supaya raw data tidak terjejas
-        let sortedForDropdown = [...data];
-        
-        sortedForDropdown.sort((a, b) => {
-            const wA = getCatWeight(a.kategoriSekolah);
-            const wB = getCatWeight(b.kategoriSekolah);
-            
-            // Sort ikut Kategori dulu
-            if (wA !== wB) return wA - wB; 
-            // Kemudian ikut Nama
-            return a.namaSekolah.localeCompare(b.namaSekolah);
-        });
-
-        // Kosongkan dropdown dulu (kecuali placeholder)
-        dropdown.innerHTML = '<option value="">Pilih Sekolah...</option>';
-
-        // Isi Dropdown yang telah disusun
-        sortedForDropdown.forEach(s => {
-            let option = document.createElement("option");
-            option.value = s.kodSekolah;
-            // Format: [KATEGORI] NAMA SEKOLAH
-            option.text = `[${s.kategoriSekolah}] ${s.namaSekolah}`;
-            dropdown.appendChild(option);
-        });
-
-        // Event: Dropdown Change
-        dropdown.addEventListener("change", (e) => {
-            const schoolCode = e.target.value;
-            if(!schoolCode) {
-                resultCard.classList.add("d-none");
-                return;
-            }
-            const school = data.find(s => s.kodSekolah === schoolCode);
-            if (school) showSchoolDetails(school);
-        });
-
-        // Event: Search Input
-        searchInput.addEventListener("input", (e) => {
-            const query = e.target.value.toLowerCase();
-            resultCard.classList.add("d-none"); // Sembunyi dulu
-
-            if (query.length > 2) {
-                const school = data.find(s => 
-                    s.namaSekolah.toLowerCase().includes(query) || 
-                    s.kodSekolah.toLowerCase().includes(query)
-                );
-                
-                if (school) {
-                    // Set dropdown value supaya sync
-                    dropdown.value = school.kodSekolah;
-                    showSchoolDetails(school);
-                } else {
-                    dropdown.value = ""; // Reset jika tak jumpa
-                }
-            }
-        });
-
-        function showSchoolDetails(school) {
-            resultCard.classList.remove("d-none");
-            
-            // Papar Nama & Kod
-            document.getElementById("resultTitle").innerText = `${school.namaSekolah} (${school.kodSekolah})`;
-
-            // Kira Skor Semasa (Fresh calculation)
-            let currentScores = {};
-            CONFIG.years.forEach(year => {
-                currentScores[year] = CONFIG.activities.reduce((acc, act) => acc + (school[getKey(act.id, year)] ? 1 : 0), 0);
-            });
-
-            // Update UI Skor
-            if(document.getElementById("score2024")) document.getElementById("score2024").innerText = currentScores[2024];
-            if(document.getElementById("score2025")) document.getElementById("score2025").innerText = currentScores[2025];
-
-            // Senarai Aktiviti
-            const listContainer = document.getElementById("activityList");
-            listContainer.innerHTML = "";
-            let anyParticipation = false;
-
-            CONFIG.activities.forEach(act => {
-                let statusHtml = CONFIG.years.map(year => {
-                    let joined = school[getKey(act.id, year)];
-                    if(joined) anyParticipation = true;
-                    return joined 
-                        ? `<span class="text-success fw-bold mx-1"><i class="fas fa-check"></i> ${year}</span>`
-                        : `<span class="text-muted mx-1" style="opacity:0.3"><i class="fas fa-times"></i> ${year}</span>`;
-                }).join(" <span class='text-muted'>|</span> ");
-
-                // Jika pernah sertai salah satu tahun, papar dalam list
-                if(CONFIG.years.some(year => school[getKey(act.id, year)])) {
-                    let li = document.createElement("li");
-                    li.className = "list-group-item d-flex justify-content-between align-items-center";
-                    li.innerHTML = `<span>${act.label}</span> <div>${statusHtml}</div>`;
-                    listContainer.appendChild(li);
-                }
-            });
-
-            if (!anyParticipation) {
-                listContainer.innerHTML = '<li class="list-group-item text-danger text-center"><i class="fas fa-exclamation-circle"></i> Tiada sebarang rekod penyertaan dikesan.</li>';
-            }
-        }
-    }
-});
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

@@ -87,8 +87,11 @@ document.addEventListener("DOMContentLoaded", function () {
         renderCharts(stats);
 
         // 3. Render Jadual
-        topSchools.sort((a, b) => b.totalScore - a.totalScore);
-        renderTopSchoolsTable(topSchools.slice(0, 10));
+        // MODIFIED: Susun ikut markah 2025 tertinggi
+        topSchools.sort((a, b) => b.scores[2025] - a.scores[2025]);
+        
+        // MODIFIED: Papar semua sekolah aktif (tiada .slice)
+        renderTopSchoolsTable(topSchools);
         renderZeroSchoolsTable(zeroSchools);
 
         // 4. Setup Fungsi Eksport CSV (Baharu!)
@@ -167,18 +170,21 @@ document.addEventListener("DOMContentLoaded", function () {
         
         tbody.innerHTML = "";
         schools.forEach(s => {
-            let scoreY1 = s.scores[CONFIG.years[0]];
-            let scoreY2 = s.scores[CONFIG.years[1]];
+            let scoreY1 = s.scores[CONFIG.years[0]]; // 2024
+            let scoreY2 = s.scores[CONFIG.years[1]]; // 2025
+            
+            // Logic Trend: Bandingkan 2025 dengan 2024
             let trendIcon = scoreY2 >= scoreY1 
                 ? '<span class="badge bg-success"><i class="fas fa-arrow-up"></i> Kekal/Naik</span>' 
                 : '<span class="badge bg-warning text-dark"><i class="fas fa-arrow-down"></i> Menurun</span>';
             
+            // Highlight skor 2025 sebab itu kriteria sorting utama sekarang
             tbody.innerHTML += `<tr>
                 <td>${s.kodSekolah}</td>
                 <td>${s.namaSekolah}</td>
                 <td>${s.kategoriSekolah}</td>
-                <td class="text-center">${scoreY1}</td>
-                <td class="text-center fw-bold text-primary">${scoreY2}</td>
+                <td class="text-center text-muted">${scoreY1}</td>
+                <td class="text-center fw-bold text-primary fs-5">${scoreY2}</td>
                 <td>${trendIcon}</td>
             </tr>`;
         });
@@ -199,19 +205,63 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // --- SISTEM CARIAN & DROPDOWN ---
+    // --- SISTEM CARIAN & DROPDOWN (MODIFIED: GROUPING) ---
     function setupSearchSystem(data) {
         const dropdown = document.getElementById("schoolDropdown");
         const searchInput = document.getElementById("searchInput");
         const resultCard = document.getElementById("schoolResultCard");
 
-        // Isi Dropdown
-        data.sort((a, b) => a.namaSekolah.localeCompare(b.namaSekolah));
-        data.forEach(s => {
-            let option = document.createElement("option");
-            option.value = s.kodSekolah;
-            option.text = s.namaSekolah;
-            dropdown.appendChild(option);
+        // Kosongkan dropdown asal (kekalkan placeholder pertama)
+        // dropdown.innerHTML = '<option value="">Pilih Sekolah...</option>'; // Opsyenal, tapi HTML dah ada
+
+        // Susunan Kategori yang diminta
+        // Nota: "SJK" dalam permintaan dipetakan kepada "SJKC" dalam data JSON
+        const categoryOrder = ["SK", "SJKC", "SJKT", "SR SABK", "SMK", "SBP", "KV", "SM SABK"];
+
+        // 1. Group data mengikut kategori
+        const groupedData = data.reduce((acc, school) => {
+            const cat = school.kategoriSekolah;
+            if (!acc[cat]) acc[cat] = [];
+            acc[cat].push(school);
+            return acc;
+        }, {});
+
+        // 2. Loop ikut susunan kategori yang ditetapkan
+        categoryOrder.forEach(category => {
+            if (groupedData[category] && groupedData[category].length > 0) {
+                // Buat Optgroup
+                const group = document.createElement("optgroup");
+                group.label = category === "SJKC" ? "SJK (Cina)" : category; // Label cantik sikit untuk SJKC
+
+                // Sort sekolah dalam kategori mengikut abjad (A-Z)
+                groupedData[category].sort((a, b) => a.namaSekolah.localeCompare(b.namaSekolah));
+
+                // Masukkan option dalam group
+                groupedData[category].forEach(s => {
+                    let option = document.createElement("option");
+                    option.value = s.kodSekolah;
+                    option.text = s.namaSekolah;
+                    group.appendChild(option);
+                });
+
+                dropdown.appendChild(group);
+            }
+        });
+
+        // Handle kategori lain yang mungkin wujud tapi tiada dalam list 'categoryOrder' (Safety measure)
+        Object.keys(groupedData).forEach(cat => {
+            if (!categoryOrder.includes(cat)) {
+                const group = document.createElement("optgroup");
+                group.label = cat;
+                groupedData[cat].sort((a, b) => a.namaSekolah.localeCompare(b.namaSekolah));
+                groupedData[cat].forEach(s => {
+                    let option = document.createElement("option");
+                    option.value = s.kodSekolah;
+                    option.text = s.namaSekolah;
+                    group.appendChild(option);
+                });
+                dropdown.appendChild(group);
+            }
         });
 
         // Event: Dropdown

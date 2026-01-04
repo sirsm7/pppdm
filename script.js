@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", function () {
         ]
     };
 
-    // Susunan Kategori Standard (Dikongsi antara filter dan carian)
+    // Susunan Kategori Standard
     const categoryOrder = ["SK", "SJKC", "SJKT", "SR SABK", "SMK", "SBP", "KV", "SM SABK"];
 
     const getKey = (baseId, year) => `${baseId}${year}`;
@@ -91,34 +91,47 @@ document.addEventListener("DOMContentLoaded", function () {
         // 3. Render Jadual (Sort by 2025 High to Low)
         topSchools.sort((a, b) => b.scores[2025] - a.scores[2025]);
         
-        // Initial Render (Semua Kategori)
+        // Initial Render
         renderTopSchoolsTable(topSchools);
         renderZeroSchoolsTable(zeroSchools);
 
-        // 4. Setup Filter Kategori
+        // 4. Setup Filter Kategori (PENTING: Dipanggil di sini)
         setupCategoryFilter(topSchools);
 
         // 5. Setup Fungsi Eksport CSV
         setupCsvExport(zeroSchools);
     }
 
-    // --- FUNGSI FILTER KATEGORI (NEW) ---
+    // --- FUNGSI FILTER KATEGORI (DIKEMASKINI) ---
     function setupCategoryFilter(allSchools) {
         const filterDropdown = document.getElementById("categoryFilter");
-        if(!filterDropdown) return;
+        
+        // Safety check: Pastikan elemen wujud
+        if(!filterDropdown) {
+            console.error("Elemen ID 'categoryFilter' tidak dijumpai dalam HTML.");
+            return;
+        }
 
-        // Populate options based on categoryOrder
+        // Kosongkan dropdown selain opsyen pertama "Semua Kategori"
+        while (filterDropdown.options.length > 1) {
+            filterDropdown.remove(1);
+        }
+
+        // Isi dropdown berdasarkan susunan categoryOrder
         categoryOrder.forEach(cat => {
-            let label = cat === "SJKC" ? "SJK (Cina)" : cat;
-            let option = document.createElement("option");
-            option.value = cat;
-            option.text = label;
-            filterDropdown.appendChild(option);
+            // Semak jika ada sekolah dalam kategori ini sebelum tambah ke dropdown (Optional UX improvement)
+            const hasSchools = allSchools.some(s => s.kategoriSekolah === cat);
+            
+            if (hasSchools) {
+                let label = cat === "SJKC" ? "SJK (Cina)" : cat;
+                let option = document.createElement("option");
+                option.value = cat;
+                option.text = label;
+                filterDropdown.appendChild(option);
+            }
         });
 
-        // Add 'Lain-lain' if exists in data but not in standard list
-        // (Optional, for robustness)
-
+        // Event Listener: Apabila user pilih kategori
         filterDropdown.addEventListener("change", (e) => {
             const selectedCat = e.target.value;
             let filteredList;
@@ -136,6 +149,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // --- FUNGSI EKSPORT CSV ---
     function setupCsvExport(data) {
         const btn = document.getElementById("btnExportCsv");
+        if(!btn) return;
         
         btn.onclick = () => {
             if (data.length === 0) {
@@ -199,7 +213,7 @@ document.addEventListener("DOMContentLoaded", function () {
         tbody.innerHTML = "";
         
         if (schools.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Tiada sekolah dalam kategori ini yang aktif.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted p-4"><i>Tiada sekolah dalam kategori ini yang aktif.</i></td></tr>`;
             return;
         }
 
@@ -214,7 +228,7 @@ document.addEventListener("DOMContentLoaded", function () {
             tbody.innerHTML += `<tr>
                 <td>${s.kodSekolah}</td>
                 <td>${s.namaSekolah}</td>
-                <td>${s.kategoriSekolah}</td>
+                <td><span class="badge bg-info text-dark">${s.kategoriSekolah}</span></td>
                 <td class="text-center text-muted">${scoreY1}</td>
                 <td class="text-center fw-bold text-primary fs-5">${scoreY2}</td>
                 <td>${trendIcon}</td>
@@ -243,7 +257,9 @@ document.addEventListener("DOMContentLoaded", function () {
         const searchInput = document.getElementById("searchInput");
         const resultCard = document.getElementById("schoolResultCard");
 
-        // 1. Group data mengikut kategori
+        // Kosongkan dropdown sebelum isi (elak duplikasi)
+        // dropdown.innerHTML = '<option value="">Pilih Sekolah...</option>'; 
+
         const groupedData = data.reduce((acc, school) => {
             const cat = school.kategoriSekolah;
             if (!acc[cat]) acc[cat] = [];
@@ -251,7 +267,7 @@ document.addEventListener("DOMContentLoaded", function () {
             return acc;
         }, {});
 
-        // 2. Loop ikut susunan kategori yang ditetapkan (Guna global var categoryOrder)
+        // Loop categoryOrder untuk isi dropdown carian
         categoryOrder.forEach(category => {
             if (groupedData[category] && groupedData[category].length > 0) {
                 const group = document.createElement("optgroup");
@@ -270,7 +286,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
 
-        // Event: Dropdown & Search (Sama macam sebelum ini)
+        // Event Listeners untuk Carian
         dropdown.addEventListener("change", (e) => {
             const school = data.find(s => s.kodSekolah === e.target.value);
             if (school) showSchoolDetails(school);

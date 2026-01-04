@@ -2,7 +2,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const DATA_URL = "data.json";
 
     // --- CONFIGURATION ZONE ---
-    // Mudah untuk diselenggara jika tahun bertambah
     const CONFIG = {
         years: [2024, 2025], 
         activities: [
@@ -18,7 +17,22 @@ document.addEventListener("DOMContentLoaded", function () {
         ]
     };
 
+    // PEMBERAT KATEGORI UNTUK SUSUNAN (SK -> SJKC -> ... -> KV)
+    const CATEGORY_WEIGHTS = {
+        "SK": 1,
+        "SJKC": 2,
+        "SJKT": 3,
+        "SR SABK": 4,
+        "SMK": 5,
+        "SBP": 6,
+        "SM SABK": 7,
+        "KV": 8
+    };
+
     const getKey = (baseId, year) => `${baseId}${year}`;
+    
+    // Helper: Dapatkan nilai pemberat, default ke 99 jika tiada dalam senarai
+    const getCategoryWeight = (cat) => CATEGORY_WEIGHTS[cat] || 99;
 
     // --- MAIN FETCH ---
     fetch(DATA_URL)
@@ -36,6 +50,24 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error(error);
         });
 
+    // --- FUNGSI PENGISIHAN UTAMA (SORTING LOGIC) ---
+    function sortSchools(schools) {
+        return schools.sort((a, b) => {
+            // 1. Susun ikut Kategori (Hierarki)
+            const weightA = getCategoryWeight(a.kategoriSekolah);
+            const weightB = getCategoryWeight(b.kategoriSekolah);
+            if (weightA !== weightB) return weightA - weightB;
+
+            // 2. Jika Kategori sama, susun ikut Jumlah Skor (Tertinggi di atas - hanya untuk sekolah aktif)
+            if (a.totalScore !== undefined && b.totalScore !== undefined) {
+                if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
+            }
+
+            // 3. Jika Skor sama, susun ikut Nama Sekolah (A-Z)
+            return a.namaSekolah.localeCompare(b.namaSekolah);
+        });
+    }
+
     // --- CORE LOGIC ---
     function processAnalytics(data) {
         let stats = {
@@ -46,7 +78,7 @@ document.addEventListener("DOMContentLoaded", function () {
             kategori: {}
         };
 
-        let topSchools = [];
+        let activeSchools = [];
         let zeroSchools = [];
 
         data.forEach(school => {
@@ -64,10 +96,11 @@ document.addEventListener("DOMContentLoaded", function () {
             // Pengasingan Data (Aktif vs Pasif)
             if (totalScore > 0) {
                 stats.active++;
-                topSchools.push({ ...school, scores, totalScore });
+                // Simpan skor dalam objek sekolah untuk pengisihan nanti
+                activeSchools.push({ ...school, scores, totalScore });
             } else {
                 stats.zero++;
-                zeroSchools.push(school); // Simpan untuk eksport CSV
+                zeroSchools.push(school); 
             }
 
             // Agregat Carta
@@ -82,17 +115,24 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("totalSchools").innerText = stats.total;
         document.getElementById("activeSchools").innerText = stats.active;
         document.getElementById("zeroSchools").innerText = stats.zero;
+        
+        // Update badge bilangan
+        if(document.getElementById("activeCountBadge")) {
+            document.getElementById("activeCountBadge").innerText = `${activeSchools.length} Sekolah Aktif`;
+        }
 
         // 2. Render Carta
         renderCharts(stats);
 
-        // 3. Render Jadual
-        topSchools.sort((a, b) => b.totalScore - a.totalScore);
-        renderTopSchoolsTable(topSchools.slice(0, 10));
-        renderZeroSchoolsTable(zeroSchools);
+        // 3. Render Jadual (Gunakan fungsi sortSchools)
+        const sortedActiveSchools = sortSchools(activeSchools);
+        const sortedZeroSchools = sortSchools(zeroSchools); // Susun zon merah ikut kategori juga
 
-        // 4. Setup Fungsi Eksport CSV (Baharu!)
-        setupCsvExport(zeroSchools);
+        renderTopSchoolsTable(sortedActiveSchools);
+        renderZeroSchoolsTable(sortedZeroSchools);
+
+        // 4. Setup Fungsi Eksport CSV
+        setupCsvExport(sortedZeroSchools);
     }
 
     // --- FUNGSI EKSPORT CSV ---
@@ -110,7 +150,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
             // Loop Data
             data.forEach(s => {
-                // Pastikan tiada koma dalam nama sekolah mengganggu format CSV
                 let safeName = `"${s.namaSekolah}"`; 
                 csvContent += `${s.kodSekolah},${safeName},${s.parlimen},${s.kategoriSekolah}\n`;
             });
@@ -153,7 +192,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     labels: Object.keys(stats.kategori),
                     datasets: [{
                         data: Object.values(stats.kategori),
-                        backgroundColor: ['#e74a3b', '#f6c23e', '#1cc88a', '#4e73df', '#858796', '#6f42c1', '#20c9a6'],
+                        backgroundColor: ['#e74a3b', '#f6c23e', '#1cc88a', '#4e73df', '#858796', '#6f42c1', '#20c9a6', '#fd7e14'],
                     }]
                 }
             });
@@ -166,7 +205,9 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!tbody) return;
         
         tbody.innerHTML = "";
-        schools.forEach(s => {
+        
+        // Loop semua sekolah aktif (tiada slice)
+        schools.forEach((s, index) => {
             let scoreY1 = s.scores[CONFIG.years[0]];
             let scoreY2 = s.scores[CONFIG.years[1]];
             let trendIcon = scoreY2 >= scoreY1 
@@ -174,9 +215,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 : '<span class="badge bg-warning text-dark"><i class="fas fa-arrow-down"></i> Menurun</span>';
             
             tbody.innerHTML += `<tr>
+                <td class="text-center">${index + 1}</td>
                 <td>${s.kodSekolah}</td>
                 <td>${s.namaSekolah}</td>
-                <td>${s.kategoriSekolah}</td>
+                <td><span class="badge bg-info text-dark">${s.kategoriSekolah}</span></td>
                 <td class="text-center">${scoreY1}</td>
                 <td class="text-center fw-bold text-primary">${scoreY2}</td>
                 <td>${trendIcon}</td>
@@ -189,8 +231,9 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!tbody) return;
 
         tbody.innerHTML = "";
-        schools.forEach(s => {
+        schools.forEach((s, index) => {
             tbody.innerHTML += `<tr>
+                <td class="text-center">${index + 1}</td>
                 <td>${s.kodSekolah}</td>
                 <td>${s.namaSekolah}</td>
                 <td>${s.parlimen}</td>
@@ -205,12 +248,16 @@ document.addEventListener("DOMContentLoaded", function () {
         const searchInput = document.getElementById("searchInput");
         const resultCard = document.getElementById("schoolResultCard");
 
-        // Isi Dropdown
-        data.sort((a, b) => a.namaSekolah.localeCompare(b.namaSekolah));
-        data.forEach(s => {
+        // Susun data untuk dropdown menggunakan logik yang sama (Kategori -> Nama)
+        const sortedData = sortSchools([...data]); 
+
+        // Isi Dropdown dengan Grouping (Optional tapi lebih kemas jika nak letak optgroup)
+        // Di sini kita listkan semua ikut urutan kategori
+        sortedData.forEach(s => {
             let option = document.createElement("option");
             option.value = s.kodSekolah;
-            option.text = s.namaSekolah;
+            // Tambah prefix kategori dalam dropdown untuk memudahkan
+            option.text = `[${s.kategoriSekolah}] ${s.namaSekolah}`;
             dropdown.appendChild(option);
         });
 

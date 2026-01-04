@@ -18,11 +18,7 @@
         .bg-gradient-success { background: linear-gradient(45deg, #1cc88a, #13855c); color: white; }
         .bg-gradient-danger { background: linear-gradient(45deg, #e74a3b, #be2617); color: white; }
         .nav-tabs .nav-link.active { font-weight: bold; border-top: 3px solid #4e73df; }
-        
-        /* Table Tweaks */
-        .table-responsive { max-height: 750px; overflow-y: auto; }
-        thead th { position: sticky; top: 0; z-index: 10; background-color: #f8f9fa; box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1); }
-        .status-badge { font-size: 0.8rem; width: 80px; display: inline-block; text-align: center; }
+        .status-badge { font-size: 0.85rem; }
     </style>
 </head>
 <body>
@@ -111,22 +107,20 @@
                 <div class="row">
                     <div class="col-md-12 mb-4">
                         <div class="card card-box">
-                            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-                                <span><i class="fas fa-list-ol me-2"></i>Senarai Prestasi Sekolah Mengikut Kategori</span>
-                                <span class="badge bg-light text-success fw-bold px-3 py-2" id="activeCountBadge">Memuatkan...</span>
+                            <div class="card-header bg-success text-white">
+                                <i class="fas fa-star me-2"></i>Sekolah Cemerlang & Konsisten (Top 10)
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
-                                    <table class="table table-hover table-bordered table-striped align-middle" id="topSchoolsTable">
+                                    <table class="table table-hover table-bordered" id="topSchoolsTable">
                                         <thead class="table-light">
                                             <tr>
-                                                <th class="text-center" style="width: 50px;">Bil</th>
-                                                <th style="width: 100px;">Kod</th>
+                                                <th>Kod</th>
                                                 <th>Nama Sekolah</th>
-                                                <th class="text-center" style="width: 100px;">Kategori</th>
-                                                <th class="text-center" style="width: 100px;">Skor 2024</th>
-                                                <th class="text-center" style="width: 100px;">Skor 2025</th>
-                                                <th class="text-center" style="width: 150px;">Trend</th>
+                                                <th>Kategori</th>
+                                                <th>Skor 2024</th>
+                                                <th>Skor 2025</th>
+                                                <th>Trend</th>
                                             </tr>
                                         </thead>
                                         <tbody></tbody>
@@ -141,20 +135,19 @@
                             <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
                                 <span><i class="fas fa-exclamation-triangle me-2"></i>Senarai Sekolah Tiada Penyertaan Langsung (Zon Merah)</span>
                                 <button id="btnExportCsv" class="btn btn-sm btn-light text-danger fw-bold shadow-sm">
-                                    <i class="fas fa-download me-1"></i> Muat Turun Data (CSV)
+                                    <i class="fas fa-download me-1"></i> Muat Turun Data Bimbingan (CSV)
                                 </button>
                             </div>
                             <div class="card-body">
-                                <p class="text-danger small mb-3">* Data ini menunjukkan sekolah yang merekodkan 'false' untuk semua aktiviti pada tahun 2024 & 2025.</p>
+                                <p class="text-danger small">* Data ini untuk tujuan bimbingan. Sekolah ini merekodkan 'false' untuk semua pertandingan 2024 & 2025.</p>
                                 <div class="table-responsive">
-                                    <table class="table table-sm table-striped align-middle" id="zeroSchoolsTable">
+                                    <table class="table table-sm table-striped" id="zeroSchoolsTable">
                                         <thead>
                                             <tr>
-                                                <th class="text-center" style="width: 50px;">Bil</th>
                                                 <th>Kod</th>
                                                 <th>Nama Sekolah</th>
                                                 <th>Parlimen</th>
-                                                <th class="text-center">Kategori</th>
+                                                <th>Kategori</th>
                                             </tr>
                                         </thead>
                                         <tbody></tbody>
@@ -174,31 +167,32 @@
                             <div class="input-group mb-3">
                                 <span class="input-group-text"><i class="fas fa-search"></i></span>
                                 <input type="text" id="searchInput" class="form-control" placeholder="Cari Nama Sekolah atau Kod...">
-                                <select class="form-select" id="schoolDropdown" style="max-width: 300px;">
+                                <select class="form-select" id="schoolDropdown" style="max-width: 200px;">
                                     <option value="">Pilih Sekolah...</option>
                                     </select>
                             </div>
                             
                             <div id="schoolResultCard" class="card mt-3 d-none border-primary">
-                                <div class="card-header bg-primary text-white d-flex justify-content-between">
-                                    <span id="resultTitle" class="fw-bold">Nama Sekolah</span>
-                                    <span id="resultCode" class="badge bg-light text-primary">KOD</span>
+                                <div class="card-header bg-primary text-white" id="resultTitle">
+                                    Nama Sekolah
                                 </div>
                                 <div class="card-body">
                                     <div class="row text-center mb-3">
-                                        <div class="col-6 border-end">
-                                            <h5 class="text-muted small">Penyertaan 2024</h5>
-                                            <h2 id="score2024" class="text-primary fw-bold display-6">0</h2>
+                                        <div class="col-6">
+                                            <h5>2024</h5>
+                                            <h2 id="score2024" class="text-primary fw-bold">0</h2>
+                                            <span class="text-muted">Aktiviti</span>
                                         </div>
                                         <div class="col-6">
-                                            <h5 class="text-muted small">Penyertaan 2025</h5>
-                                            <h2 id="score2025" class="text-primary fw-bold display-6">0</h2>
+                                            <h5>2025</h5>
+                                            <h2 id="score2025" class="text-primary fw-bold">0</h2>
+                                            <span class="text-muted">Aktiviti</span>
                                         </div>
                                     </div>
                                     <hr>
-                                    <h6 class="fw-bold mb-3">Butiran Aktiviti:</h6>
+                                    <h6 class="fw-bold">Butiran Penyertaan:</h6>
                                     <ul id="activityList" class="list-group list-group-flush small text-start">
-                                    </ul>
+                                        </ul>
                                 </div>
                             </div>
 
